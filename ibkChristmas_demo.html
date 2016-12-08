@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>iBeiKe Christmas_demo2</title>
+    <script src="./libs/three.js"></script>
+    <script src="./libs/stats.js"></script>
+    <script src="./libs/dat.gui.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to
+             use the complete page */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<div id="Stats-output"></div>
+<div id="WebGL-output"></div>
+<script>
+    function init() {
+
+        // 启动状态
+        var stats = initStats();
+
+        // 定义了场景和照相机
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight,
+            0.1, 1000);
+        // 定义渲染器，记得设定背景颜色和大小
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMapEnabled = true;
+
+
+        // 定义了物体：平面，做法是定义planeGeometry和planeMaterial之后让两者相混合（Mesh），最后不要忘记add
+        var planeGeometry = new THREE.PlaneGeometry(60, 40, 1, 1);
+        var planeMaterial = new THREE.MeshPhongMaterial({color: 0xE0FFFF});
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.receiveShadow = true;
+
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.x = 0;
+        plane.position.y = 0;
+        plane.position.z = 0;
+        scene.add(plane);
+
+        // 照相机的位置定义，并且定义了照相机的镜头方向
+        camera.position.x = -50;
+        camera.position.y = 20;
+        camera.position.z = 30;
+        camera.lookAt(scene.position);
+
+        // 定义环境光源
+        var ambientLight = new THREE.AmbientLight(0x0c0c0c);
+        // ambientLight.castShadow = true;
+        scene.add(ambientLight);
+
+        // 点光源的定义，记得写castShadow
+        var spotLight = new THREE.SpotLight(0xffffff);
+        spotLight.position.set(-90, 70, 100);
+        spotLight.castShadow = true;
+        scene.add(spotLight);
+
+
+        var vertices = [
+
+            new THREE.Vector3(0, 0, 0),
+        ];
+        var faces = [
+            // 逆时针方向为正面
+            new THREE.Face3(1, 7, 6),
+
+        ];
+
+
+        var geom = new THREE.Geometry();
+        geom.vertices = vertices;
+        geom.faces = faces;
+        geom.computeFaceNormals();
+
+        materials = [
+            new THREE.MeshPhongMaterial({opacity: 0.5, color: "white", transparent: true}),
+//            new THREE.MeshBasicMaterial({color: 0x000000, wireframe: true})
+        ];
+
+        var mesh = new THREE.SceneUtils.createMultiMaterialObject(geom, materials);
+        mesh.traverse(function (e) {
+            e.castShadow = true;
+        });
+
+        mesh.rotation.y = 0.02;
+
+        var mesh_1 = new THREE.Object3D();
+        scene.add(mesh);
+
+
+
+        var Colors = {
+            red:0xf25346,
+            white:0xd8d0d1,
+            brown:0x59332e,
+            pink:0xF5986E,
+            brownDark:0x23190f,
+            blue:0x68c3c0
+        };
+
+        var AirPlane = function() {
+
+            this.mesh = new THREE.Object3D();
+
+            // 创建机舱
+            var geomCockpit = new THREE.BoxGeometry(60, 50, 50, 1, 1, 1);
+            var matCockpit = new THREE.MeshPhongMaterial({
+                color: Colors.red,
+                shading: THREE.FlatShading
+            });
+            var cockpit = new THREE.Mesh(geomCockpit, matCockpit);
+            cockpit.castShadow = true;
+            cockpit.receiveShadow = true;
+            this.mesh.add(cockpit);
+
+            // 创建引擎
+            var geomEngine = new THREE.BoxGeometry(20, 50, 50, 1, 1, 1);
+            var matEngine = new THREE.MeshPhongMaterial({
+                color: Colors.white,
+                shading: THREE.FlatShading
+            });
+            var engine = new THREE.Mesh(geomEngine, matEngine);
+            engine.position.x = 40;
+            engine.castShadow = true;
+            engine.receiveShadow = true;
+            this.mesh.add(engine);
+
+            // 创建机尾
+            var geomTailPlane = new THREE.BoxGeometry(15, 20, 5, 1, 1, 1);
+            var matTailPlane = new THREE.MeshPhongMaterial({
+                color: Colors.red,
+                shading: THREE.FlatShading
+            });
+            var tailPlane = new THREE.Mesh(geomTailPlane, matTailPlane);
+            tailPlane.position.set(-35, 25, 0);
+            tailPlane.castShadow = true;
+            tailPlane.receiveShadow = true;
+            this.mesh.add(tailPlane);
+
+            // 创建机翼
+            var geomSideWing = new THREE.BoxGeometry(40, 8, 150, 1, 1, 1);
+            var matSideWing = new THREE.MeshPhongMaterial({
+                color: Colors.red,
+                shading: THREE.FlatShading
+            });
+            var sideWing = new THREE.Mesh(geomSideWing, matSideWing);
+            sideWing.castShadow = true;
+            sideWing.receiveShadow = true;
+            this.mesh.add(sideWing);
+
+            // 创建螺旋桨
+            var geomPropeller = new THREE.BoxGeometry(20, 10, 10, 1, 1, 1);
+            var matPropeller = new THREE.MeshPhongMaterial({
+                color: Colors.brown,
+                shading: THREE.FlatShading
+            });
+            this.propeller = new THREE.Mesh(geomPropeller, matPropeller);
+            this.propeller.castShadow = true;
+            this.propeller.receiveShadow = true;
+
+            // 创建螺旋桨的桨叶
+            var geomBlade = new THREE.BoxGeometry(1, 100, 20, 1, 1, 1);
+            var matBlade = new THREE.MeshPhongMaterial({
+                color: Colors.brownDark,
+                shading: THREE.FlatShading
+            });
+
+            var blade = new THREE.Mesh(geomBlade, matBlade);
+            blade.position.set(8, 0, 0);
+            blade.castShadow = true;
+            blade.receiveShadow = true;
+            this.propeller.add(blade);
+            this.propeller.position.set(50, 0, 0);
+            this.mesh.add(this.propeller);
+        };
+
+        var airplane;
+
+        function createPlane(){
+            airplane = new AirPlane();
+            airplane.mesh.scale.set(.25,.25,.25);
+            airplane.mesh.position.y = 100;
+            scene.add(airplane.mesh);
+        }
+        createPlane();
+
+
+        // 将渲染器的整个dom加到div中
+        document.getElementById("WebGL-output").appendChild(renderer.domElement);
+
+        var step = 0;
+
+        // 定义控制窗口的控制类，和其中的几个属性和方法
+        var controls = new function () {
+
+
+            };
+
+
+        // 将控制窗口的几个方法参数添加到控制界面的gui中
+        var gui = new dat.GUI();
+
+
+        /*重力感应事件*/
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener("deviceorientation", orientationHandler, true);
+        } else {
+            document.body.innerHTML = "What user agent u r using???";
+        }
+
+
+        /*重力感应事件发生的时候的回调函数*/
+        function orientationHandler(event) {
+//            var alphaRotation = (event.alpha / 90) * 0.1;
+//            var betaRotation = (event.beta / 90) * 0.1;
+            var gammaRotation = (event.gamma / 90) * 0.1;
+
+            if (gammaRotation){
+
+            }
+        }
+
+        render();
+        // 渲染场景
+        function render() {
+
+            // 每次刷新时状态栏跟着刷新
+            stats.update();
+
+
+/*
+            materials[0].opacity = controls.opacity;
+            mesh.visible = controls.visible;
+            mesh.rotation.y += controls.rotationSpeed;
+            mesh.scale.set(controls.scaleX, controls.scaleY, controls.scaleZ);*/
+
+            // 相当于是遍历
+            scene.traverse(function (e) {
+
+            });
+
+            // 每次刷新动画
+            requestAnimationFrame(render);
+            // 渲染场景和照相机
+            renderer.render(scene, camera);
+        }
+
+        // 定义状态窗口的位置
+        function initStats() {
+
+            var stats = new Stats();
+            // 状态0是fps，1是ms
+            stats.setMode(0);
+            // 设定状态窗口的css属性
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+            // 将状态栏的dom加到div中
+            document.getElementById("Stats-output").appendChild(stats.domElement);
+
+            return stats;
+        }
+
+
+    }
+    window.onload = init;
+</script>
+
+</body>
+</html>
